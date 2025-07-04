@@ -23,3 +23,9 @@ options:
 ```
 
 If no epoch is provided, the epoch is extracted from the mean timestamp of the trajectory.
+
+### Example using test.traj
+
+```bash
+python .\itrf2020_to_etrs89.py --finp .\test.traj --epoch 2021.48  --fout test_trafo.traj
+```
