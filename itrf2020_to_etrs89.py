@@ -1,7 +1,10 @@
 import argparse
 from datetime import datetime
+import os
 import numpy as np
+from pyproj import Transformer
 import trajectopy as tpy
+
 
 ITRF2020_to_ETRS89 = {
     "t0": 2015.0,
@@ -24,17 +27,45 @@ ITRF2020_to_ETRS89 = {
 
 def main():
     # Argument parsing
-
     parser = argparse.ArgumentParser(description="Convert ITRF2020 coordinates to ETRS89 coordinates.")
-    parser.add_argument("--finp", type=str, required=True, help="Input trajectopy file in ITRF2020 format.")
+    parser.add_argument(
+        "--finp",
+        type=str,
+        required=False,
+        help="Input trajectopy file in ITRF2020 format.",
+        default="m10_igg_dach.traj",
+    )
     parser.add_argument("--epoch", type=float, required=False, help="Epoch for the conversion.", default=None)
     parser.add_argument(
         "--fout", type=str, required=False, help="Output trajectopy file in ETRS89 format.", default="output.traj"
+    )
+    parser.add_argument(
+        "--gsb",
+        type=str,
+        required=False,
+        help="Path to the GSB file for horizontal grid shift transformation for R16 to R25.",
+        default="R16_to_R25.gsb",
+    )
+    parser.add_argument(
+        "--target_epsg",
+        type=int,
+        required=False,
+        help="Target EPSG code for the output trajectory.",
+        default=25832,  # ETRS89 / ETRS-GRS80 (geographic)
+    )
+    parser.add_argument(
+        "--realization",
+        type=str,
+        required=False,
+        help="Realization of ETRS89 to use (R16 or R25).",
+        default="R25",
     )
     args = parser.parse_args()
     input_file = args.finp
     output_file = args.fout
     epoch = args.epoch
+    gsb_file = args.gsb
+    target_epsg = args.target_epsg
 
     trajectory = tpy.Trajectory.from_file(input_file)
 
@@ -70,6 +101,25 @@ def main():
 
     trajectory.apply_transformation(transformation_matrix)
     trajectory.pos.epsg = 4936  # ETRS89 / ETRS-GRS80 (geographic)
+
+    abs_gsb_path = os.path.abspath(gsb_file)
+    pipeline_str = (
+        f"+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad "
+        f"+step +proj=hgridshift +grids={abs_gsb_path} "
+        f"+step +proj=unitconvert +xy_in=rad +xy_out=deg"
+    )
+
+    transformer = Transformer.from_pipeline(pipeline_str)
+
+    if args.realization == "R16":
+        print("Transforming to R2016.")
+        trajectory.pos.to_epsg(4258)
+        trafo_y, trafo_x, trafo_z = transformer.transform(
+            trajectory.pos.y, trajectory.pos.x, trajectory.pos.z, direction="inverse"
+        )
+        trajectory.pos.xyz = np.array([trafo_x, trafo_y, trafo_z]).T
+
+    trajectory.pos.to_epsg(target_epsg)  # Convert to target EPSG code
     trajectory.to_file(output_file)
 
 
