@@ -4,7 +4,7 @@ import numpy as np
 import trajectopy as tpy
 
 
-ITRF2020_to_ETRS89 = {
+ITRF2020_to_ETRS89_R2025 = {
     "t0": 2015.0,
     "T1": 41.1393,
     "T2": 51.9830,
@@ -25,7 +25,7 @@ ITRF2020_to_ETRS89 = {
 
 def main():
     # Argument parsing
-    parser = argparse.ArgumentParser(description="Convert ITRF2020 coordinates to ETRS89 coordinates.")
+    parser = argparse.ArgumentParser(description="Convert ITRF2020 coordinates to ETRS89 R2025 coordinates.")
     parser.add_argument(
         "--finp",
         type=str,
@@ -66,13 +66,13 @@ def main():
 
     trajectory.pos.to_epsg(4978)  # ITRF2020 / WGS 84 (geocentric)
 
-    t_x = ITRF2020_to_ETRS89["T1"] + ITRF2020_to_ETRS89["dotT1"] * (epoch - ITRF2020_to_ETRS89["t0"])
-    t_y = ITRF2020_to_ETRS89["T2"] + ITRF2020_to_ETRS89["dotT2"] * (epoch - ITRF2020_to_ETRS89["t0"])
-    t_z = ITRF2020_to_ETRS89["T3"] + ITRF2020_to_ETRS89["dotT3"] * (epoch - ITRF2020_to_ETRS89["t0"])
-    r_x = ITRF2020_to_ETRS89["R1"] + ITRF2020_to_ETRS89["dotR1"] * (epoch - ITRF2020_to_ETRS89["t0"])
-    r_y = ITRF2020_to_ETRS89["R2"] + ITRF2020_to_ETRS89["dotR2"] * (epoch - ITRF2020_to_ETRS89["t0"])
-    r_z = ITRF2020_to_ETRS89["R3"] + ITRF2020_to_ETRS89["dotR3"] * (epoch - ITRF2020_to_ETRS89["t0"])
-    d = ITRF2020_to_ETRS89["D"] + ITRF2020_to_ETRS89["dotD"] * (epoch - ITRF2020_to_ETRS89["t0"])
+    t_x = ITRF2020_to_ETRS89_R2025["T1"] + ITRF2020_to_ETRS89_R2025["dotT1"] * (epoch - ITRF2020_to_ETRS89_R2025["t0"])
+    t_y = ITRF2020_to_ETRS89_R2025["T2"] + ITRF2020_to_ETRS89_R2025["dotT2"] * (epoch - ITRF2020_to_ETRS89_R2025["t0"])
+    t_z = ITRF2020_to_ETRS89_R2025["T3"] + ITRF2020_to_ETRS89_R2025["dotT3"] * (epoch - ITRF2020_to_ETRS89_R2025["t0"])
+    r_x = ITRF2020_to_ETRS89_R2025["R1"] + ITRF2020_to_ETRS89_R2025["dotR1"] * (epoch - ITRF2020_to_ETRS89_R2025["t0"])
+    r_y = ITRF2020_to_ETRS89_R2025["R2"] + ITRF2020_to_ETRS89_R2025["dotR2"] * (epoch - ITRF2020_to_ETRS89_R2025["t0"])
+    r_z = ITRF2020_to_ETRS89_R2025["R3"] + ITRF2020_to_ETRS89_R2025["dotR3"] * (epoch - ITRF2020_to_ETRS89_R2025["t0"])
+    d = ITRF2020_to_ETRS89_R2025["D"] + ITRF2020_to_ETRS89_R2025["dotD"] * (epoch - ITRF2020_to_ETRS89_R2025["t0"])
 
     t_x /= 1000
     t_y /= 1000
@@ -96,6 +96,9 @@ def main():
     trajectory.pos.epsg = 4936
     trajectory.pos.to_epsg(target_epsg)
     trajectory.to_file(output_file)
+
+    print(f"Transformed positions:")
+    print(np.round(trajectory.pos.xyz, 4))
 
 
 if __name__ == "__main__":
