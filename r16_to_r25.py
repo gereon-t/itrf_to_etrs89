@@ -48,6 +48,8 @@ def main():
     trajectory = tpy.Trajectory.from_file(input_file)
     trajectory.pos.to_epsg(4258)
 
+    traj_in_utm = trajectory.pos.to_epsg(25832, inplace=False)
+
     abs_gsb_path = os.path.abspath(gsb_file)
     pipeline_str = (
         f"+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad "
@@ -62,6 +64,19 @@ def main():
 
     trajectory.pos.to_epsg(target_epsg)
     trajectory.to_file(output_file)
+
+    traj_out_utm = trajectory.pos.to_epsg(25832, inplace=False)
+
+    print(f"Transformed coordinates:")
+    print(np.round(trajectory.pos.xyz, 4))
+
+    print(f"Differences in UTM coordinates (EPSG:25832) [mm]:")
+    print(np.round(1000 * (traj_out_utm.xyz - traj_in_utm.xyz), 4))
+
+    mean_diff = np.mean(1000 * (traj_out_utm.xyz - traj_in_utm.xyz), axis=0)
+    print(
+        f"Mean difference in UTM coordinates (EPSG:25832) [mm]: {np.round(mean_diff, 4)}, total: {np.linalg.norm(mean_diff):.4f} mm"
+    )
 
 
 if __name__ == "__main__":
